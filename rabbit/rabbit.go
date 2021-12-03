@@ -1,8 +1,8 @@
 package rabbit
 
 import (
+	"github.com/c3sr/mq/interfaces"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"mq/interfaces"
 )
 
 type rabbitChannel struct {

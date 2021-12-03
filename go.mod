@@ -1,4 +1,4 @@
-module mq
+module github.com/c3sr/mq
 
 go 1.13
 

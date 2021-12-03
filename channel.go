@@ -1,6 +1,6 @@
 package mq
 
-import "mq/interfaces"
+import "github.com/c3sr/mq/interfaces"
 
 type channel struct {
 	exchangeName string

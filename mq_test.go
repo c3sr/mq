@@ -3,8 +3,8 @@
 package mq
 
 import (
+	"github.com/c3sr/mq/interfaces"
 	"github.com/stretchr/testify/assert"
-	"mq/interfaces"
 	"os"
 	"testing"
 )

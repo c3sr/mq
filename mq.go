@@ -2,8 +2,8 @@ package mq
 
 import (
 	"fmt"
+	"github.com/c3sr/mq/interfaces"
 	"log"
-	"mq/interfaces"
 	"os"
 )
 

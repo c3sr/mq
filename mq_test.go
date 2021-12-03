@@ -1,0 +1,144 @@
+// +build !integration
+
+package mq
+
+import (
+	"github.com/stretchr/testify/assert"
+	"mq/interfaces"
+	"os"
+	"testing"
+)
+
+type spyChannel struct {
+	boundExchangeName    string
+	closeCalled          bool
+	declaredExchangeName string
+	lastExchangeName     string
+	lastMessage          string
+	consumedQueueName    string
+	queueDeclareCalled   bool
+}
+
+func (s *spyChannel) Close() error {
+	s.closeCalled = true
+
+	return nil
+}
+
+func (s *spyChannel) Consume(queue string, consumer string, autoAck bool, exclusive bool, noLocal bool, noWait bool, args map[string]interface{}) (<-chan interfaces.Message, error) {
+	messages := make(chan interfaces.Message)
+	s.consumedQueueName = queue
+
+	return messages, nil
+}
+
+func (s *spyChannel) ExchangeDeclare(name string, kind string, durable bool, autoDelete bool, internal bool, noWait bool, args map[string]interface{}) error {
+	s.declaredExchangeName = name
+
+	return nil
+}
+
+func (s *spyChannel) Publish(exchange string, routingKey string, mandatory bool, immediate bool, message interfaces.Message) error {
+	s.lastExchangeName = exchange
+	s.lastMessage = string(message.Body)
+
+	return nil
+}
+
+func (s *spyChannel) QueueBind(name string, routingKey string, exchange string, noWait bool, args map[string]interface{}) error {
+	s.boundExchangeName = exchange
+
+	return nil
+}
+
+func (s *spyChannel) QueueDeclare(name string, durable bool, autoDelete bool, exclusive bool, noWait bool, args map[string]interface{}) (interfaces.Queue, error) {
+	s.queueDeclareCalled = true
+	queue := interfaces.Queue{Name: "spyQueue"}
+
+	return queue, nil
+}
+
+type spyConnection struct {
+	channel *spyChannel
+}
+
+func (s *spyConnection) Channel() (interfaces.QueueChannel, error) {
+	s.channel = &spyChannel{
+		closeCalled:          false,
+		declaredExchangeName: "",
+	}
+
+	return s.channel, nil
+}
+
+func (s *spyConnection) Close() error {
+	return nil
+}
+
+type spyDialer struct {
+	url        string
+	connection *spyConnection
+}
+
+func (d *spyDialer) Dial(url string) (interfaces.QueueConnection, error) {
+	d.url = url
+	d.connection = &spyConnection{}
+
+	return d.connection, nil
+}
+
+var testDialer *spyDialer
+
+func setupDialer() {
+	testDialer = &spyDialer{
+		url: "",
+	}
+
+	SetDialer(testDialer)
+}
+
+func TestMessageQueueDialsUrlFromEnvironment(t *testing.T) {
+	os.Setenv("MQ_HOST", "testhost")
+	os.Setenv("MQ_PORT", "1234")
+	os.Setenv("MQ_USER", "testuser")
+	os.Setenv("MQ_PASSWORD", "testpassword")
+	setupDialer()
+	NewMessageQueue()
+
+	assert.Equal(t, "amqp://testuser:testpassword@testhost:1234/", testDialer.url)
+}
+
+func TestGetPublishChannelDeclaresExchange(t *testing.T) {
+	setupDialer()
+	mq := NewMessageQueue()
+
+	channel, _ := mq.GetPublishChannel("test")
+
+	assert.NotNil(t, channel)
+	assert.Equal(t, "test", testDialer.connection.channel.declaredExchangeName)
+}
+
+func TestSendMessagePublishesToQueueChannel(t *testing.T) {
+	setupDialer()
+	mq := NewMessageQueue()
+
+	channel, err := mq.GetPublishChannel("publish")
+	err = channel.SendMessage("hello, world!")
+
+	assert.Nil(t, err)
+	assert.Equal(t, "publish", testDialer.connection.channel.lastExchangeName)
+	assert.Equal(t, "hello, world!", testDialer.connection.channel.lastMessage)
+}
+
+func TestSubscribeChannel(t *testing.T) {
+	setupDialer()
+	mq := NewMessageQueue()
+
+	messages, _ := mq.SubscribeToChannel("consume")
+
+	assert.Equal(t, "consume", testDialer.connection.channel.declaredExchangeName)
+	assert.True(t, testDialer.connection.channel.queueDeclareCalled)
+	assert.Equal(t, "consume", testDialer.connection.channel.boundExchangeName)
+	assert.Equal(t, "spyQueue", testDialer.connection.channel.consumedQueueName)
+	assert.NotNil(t, messages)
+}

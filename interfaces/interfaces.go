@@ -1,14 +1,16 @@
 package interfaces
 
 type MessageQueue interface {
+	Acknowledge(message Message) error
 	Shutdown()
 	GetPublishChannel(name string) (Channel, error)
 	SubscribeToChannel(name string) (<-chan Message, error)
 }
 
 type Message struct {
-	ContentType string
 	Body        []byte
+	ContentType string
+	Id          uint64
 }
 
 type Queue struct {
@@ -16,6 +18,7 @@ type Queue struct {
 }
 
 type QueueChannel interface {
+	Ack(tag uint64, multiple bool) error
 	Close() error
 	Consume(queue string, consumer string, autoAck bool, exclusive bool, noLocal bool, noWait bool, args map[string]interface{}) (<-chan Message, error)
 	ExchangeDeclare(name string, kind string, durable bool, autoDelete bool, internal bool, noWait bool, args map[string]interface{}) error

@@ -3,15 +3,17 @@
 package rabbit
 
 import (
+	"github.com/c3sr/mq"
 	"github.com/stretchr/testify/assert"
-	"mq"
 	"testing"
 )
 
 func TestRabbitBasicCommunication(t *testing.T) {
 	dialer := NewRabbitDialer()
 	mq.SetDialer(dialer)
-	messageQueue := mq.NewMessageQueue()
+	messageQueue, err := mq.NewMessageQueue()
+
+	assert.Nil(t, err, "NewMessageQueue should not return an error")
 
 	channel, err := messageQueue.GetPublishChannel("integration")
 

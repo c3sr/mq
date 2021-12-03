@@ -21,7 +21,12 @@ func SetDialer(d interfaces.QueueDialer) {
 	dialer = d
 }
 
-func NewMessageQueue() interfaces.MessageQueue {
+func NewMessageQueue() (mq interfaces.MessageQueue, err error) {
+	if dialer == nil {
+		err = fmt.Errorf("A dialer must be provided using SetDialer()")
+		return
+	}
+
 	url := makeMqUrlFromEnvironment()
 
 	if connection == nil {
@@ -31,9 +36,11 @@ func NewMessageQueue() interfaces.MessageQueue {
 		failOnError(err, "Failed to open a channel")
 	}
 
-	return messageQueue{
+	mq = messageQueue{
 		channel: qChannel,
 	}
+
+	return
 }
 
 func makeMqUrlFromEnvironment() string {

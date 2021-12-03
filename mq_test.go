@@ -10,6 +10,7 @@ import (
 )
 
 type spyChannel struct {
+	ackedMessageId       uint64
 	boundExchangeName    string
 	closeCalled          bool
 	declaredExchangeName string
@@ -22,6 +23,11 @@ type spyChannel struct {
 func (s *spyChannel) Close() error {
 	s.closeCalled = true
 
+	return nil
+}
+
+func (s *spyChannel) Ack(tag uint64, multiple bool) error {
+	s.ackedMessageId = tag
 	return nil
 }
 
@@ -97,6 +103,12 @@ func setupDialer() {
 	SetDialer(testDialer)
 }
 
+func TestNoDialerError(t *testing.T) {
+	_, err := NewMessageQueue()
+
+	assert.Equal(t, "A dialer must be provided using SetDialer()", err.Error())
+}
+
 func TestMessageQueueDialsUrlFromEnvironment(t *testing.T) {
 	os.Setenv("MQ_HOST", "testhost")
 	os.Setenv("MQ_PORT", "1234")
@@ -110,7 +122,7 @@ func TestMessageQueueDialsUrlFromEnvironment(t *testing.T) {
 
 func TestGetPublishChannelDeclaresExchange(t *testing.T) {
 	setupDialer()
-	mq := NewMessageQueue()
+	mq, _ := NewMessageQueue()
 
 	channel, _ := mq.GetPublishChannel("test")
 
@@ -120,7 +132,7 @@ func TestGetPublishChannelDeclaresExchange(t *testing.T) {
 
 func TestSendMessagePublishesToQueueChannel(t *testing.T) {
 	setupDialer()
-	mq := NewMessageQueue()
+	mq, _ := NewMessageQueue()
 
 	channel, err := mq.GetPublishChannel("publish")
 	err = channel.SendMessage("hello, world!")
@@ -132,7 +144,7 @@ func TestSendMessagePublishesToQueueChannel(t *testing.T) {
 
 func TestSubscribeChannel(t *testing.T) {
 	setupDialer()
-	mq := NewMessageQueue()
+	mq, _ := NewMessageQueue()
 
 	messages, _ := mq.SubscribeToChannel("consume")
 
@@ -141,4 +153,14 @@ func TestSubscribeChannel(t *testing.T) {
 	assert.Equal(t, "consume", testDialer.connection.channel.boundExchangeName)
 	assert.Equal(t, "spyQueue", testDialer.connection.channel.consumedQueueName)
 	assert.NotNil(t, messages)
+}
+
+func TestAcknowledgeMessage(t *testing.T) {
+	setupDialer()
+	mq, _ := NewMessageQueue()
+	message := interfaces.Message{Id: 1}
+
+	mq.Acknowledge(message)
+
+	assert.Equal(t, uint64(1), testDialer.connection.channel.ackedMessageId)
 }

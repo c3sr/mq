@@ -9,6 +9,10 @@ type messageQueue struct {
 	channel interfaces.QueueChannel
 }
 
+func (q messageQueue) Acknowledge(message interfaces.Message) error {
+	return qChannel.Ack(message.Id, false)
+}
+
 func (q messageQueue) Shutdown() {
 	qChannel.Close()
 	qChannel = nil

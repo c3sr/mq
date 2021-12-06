@@ -74,7 +74,7 @@ func (c *rabbitConnection) Channel() (interfaces.QueueChannel, error) {
 }
 
 func (c *rabbitConnection) Close() error {
-	return c.Close()
+	return c.Connection.Close()
 }
 
 type rabbitDialer struct{}

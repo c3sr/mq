@@ -8,9 +8,10 @@ type MessageQueue interface {
 }
 
 type Message struct {
-	Body        []byte
-	ContentType string
-	Id          uint64
+	Body          []byte
+	ContentType   string
+	CorrelationId string
+	Id            uint64
 }
 
 type Queue struct {
@@ -37,5 +38,5 @@ type QueueDialer interface {
 }
 
 type Channel interface {
-	SendMessage(message string) error
+	SendMessage(message string) (string, error)
 }

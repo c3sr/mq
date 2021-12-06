@@ -24,9 +24,10 @@ func (c *rabbitChannel) Consume(queue string, consumer string, autoAck bool, exc
 	go func() {
 		for d := range delivery {
 			messages <- interfaces.Message{
-				Id:          d.DeliveryTag,
-				ContentType: d.ContentType,
-				Body:        d.Body,
+				Id:            d.DeliveryTag,
+				ContentType:   d.ContentType,
+				CorrelationId: d.CorrelationId,
+				Body:          d.Body,
 			}
 		}
 	}()
@@ -45,8 +46,9 @@ func (c *rabbitChannel) Publish(exchange string, routingKey string, mandatory bo
 		mandatory,
 		immediate,
 		amqp.Publishing{
-			ContentType: message.ContentType,
-			Body:        message.Body,
+			ContentType:   message.ContentType,
+			CorrelationId: message.CorrelationId,
+			Body:          message.Body,
 		})
 }
 

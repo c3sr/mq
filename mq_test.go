@@ -15,6 +15,7 @@ type spyChannel struct {
 	closeCalled          bool
 	declaredExchangeName string
 	declaredQueueName    string
+	lastCorrelationId    string
 	lastExchangeName     string
 	lastMessage          string
 	lastRoutingKey       string
@@ -49,6 +50,7 @@ func (s *spyChannel) Publish(exchange string, routingKey string, mandatory bool,
 	s.lastExchangeName = exchange
 	s.lastRoutingKey = routingKey
 	s.lastMessage = string(message.Body)
+	s.lastCorrelationId = message.CorrelationId
 
 	return nil
 }
@@ -137,7 +139,7 @@ func TestSendMessagePublishesToQueueChannel(t *testing.T) {
 	mq, _ := NewMessageQueue()
 
 	channel, err := mq.GetPublishChannel("publish")
-	err = channel.SendMessage("hello, world!")
+	_, err = channel.SendMessage("hello, world!")
 
 	assert.Nil(t, err)
 	assert.Equal(t, "", testDialer.connection.channel.lastExchangeName)
@@ -166,4 +168,13 @@ func TestAcknowledgeMessage(t *testing.T) {
 	mq.Acknowledge(message)
 
 	assert.Equal(t, uint64(1), testDialer.connection.channel.ackedMessageId)
+}
+
+func TestSendMessageSetsCorrelationIdToUUID(t *testing.T) {
+	setupDialer()
+	mq, _ := NewMessageQueue()
+	channel, _ := mq.GetPublishChannel("publish")
+	correlationId, _ := channel.SendMessage("test")
+
+	assert.Equal(t, correlationId, testDialer.connection.channel.lastCorrelationId)
 }

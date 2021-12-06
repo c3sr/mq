@@ -41,9 +41,9 @@ func TestMessageAcknowledgement(t *testing.T) {
 	messageQueue2, _ := mq.NewMessageQueue()
 	messageQueue3, _ := mq.NewMessageQueue()
 
-	channel, _ := messageQueue.GetPublishChannel("integration2")
-	messages2, _ := messageQueue2.SubscribeToChannel("integration2")
-	messages3, _ := messageQueue3.SubscribeToChannel("integration2")
+	channel, _ := messageQueue.GetPublishChannel("acknowledgement")
+	messages2, _ := messageQueue2.SubscribeToChannel("acknowledgement")
+	messages3, _ := messageQueue3.SubscribeToChannel("acknowledgement")
 
 	channel.SendMessage("acknowledged")
 
@@ -65,4 +65,21 @@ func TestMessageAcknowledgement(t *testing.T) {
 	messageQueue.Shutdown()
 	messageQueue2.Shutdown()
 	messageQueue3.Shutdown()
+}
+
+func TestCorrelationIdPropagation(t *testing.T) {
+	setupDialer()
+	messageQueue, _ := mq.NewMessageQueue()
+	messageQueue2, _ := mq.NewMessageQueue()
+
+	channel, _ := messageQueue.GetPublishChannel("correlation")
+	messages, _ := messageQueue2.SubscribeToChannel("correlation")
+
+	correlationId, _ := channel.SendMessage("correlated message")
+	message := <-messages
+
+	assert.Equal(t, correlationId, message.CorrelationId)
+
+	messageQueue.Shutdown()
+	messageQueue2.Shutdown()
 }

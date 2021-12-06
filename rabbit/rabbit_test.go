@@ -83,3 +83,31 @@ func TestCorrelationIdPropagation(t *testing.T) {
 	messageQueue.Shutdown()
 	messageQueue2.Shutdown()
 }
+
+func TestMessageNegativeAcknowledgement(t *testing.T) {
+	setupDialer()
+	messageQueue, _ := mq.NewMessageQueue()
+	messageQueue2, _ := mq.NewMessageQueue()
+	messageQueue3, _ := mq.NewMessageQueue()
+
+	channel, _ := messageQueue.GetPublishChannel("nacknowledgment")
+	messages2, _ := messageQueue2.SubscribeToChannel("nacknowledgment")
+	messages3, _ := messageQueue3.SubscribeToChannel("nacknowledgment")
+
+	correlationId, _ := channel.SendMessage("nacked")
+
+	message2 := <-messages2
+	err := messageQueue2.Nack(message2)
+
+	if err != nil {
+		t.Errorf("failed to nack message: %s", err)
+	}
+
+	message3 := <-messages3
+
+	assert.Equal(t, correlationId, message3.CorrelationId)
+
+	messageQueue.Shutdown()
+	messageQueue2.Shutdown()
+	messageQueue3.Shutdown()
+}

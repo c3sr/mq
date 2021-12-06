@@ -35,7 +35,7 @@ func NewMessageQueue() (mq interfaces.MessageQueue, err error) {
 	ch, err = conn.Channel()
 	failOnError(err, "Failed to open a channel")
 
-	mq = messageQueue{
+	mq = &messageQueue{
 		channel:    ch,
 		connection: conn,
 	}

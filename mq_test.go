@@ -19,6 +19,8 @@ type spyChannel struct {
 	lastExchangeName     string
 	lastMessage          string
 	lastRoutingKey       string
+	nackedMessageId      uint64
+	nackRequeue          bool
 	consumedQueueName    string
 }
 
@@ -43,6 +45,12 @@ func (s *spyChannel) Consume(queue string, consumer string, autoAck bool, exclus
 func (s *spyChannel) ExchangeDeclare(name string, kind string, durable bool, autoDelete bool, internal bool, noWait bool, args map[string]interface{}) error {
 	s.declaredExchangeName = name
 
+	return nil
+}
+
+func (s *spyChannel) Nack(tag uint64, multiple bool, requeue bool) error {
+	s.nackedMessageId = tag
+	s.nackRequeue = requeue
 	return nil
 }
 
@@ -177,4 +185,15 @@ func TestSendMessageSetsCorrelationIdToUUID(t *testing.T) {
 	correlationId, _ := channel.SendMessage("test")
 
 	assert.Equal(t, correlationId, testDialer.connection.channel.lastCorrelationId)
+}
+
+func TestNegativeAcknowledgeMessage(t *testing.T) {
+	setupDialer()
+	mq, _ := NewMessageQueue()
+	message := interfaces.Message{Id: 1}
+
+	mq.Nack(message)
+
+	assert.Equal(t, uint64(1), testDialer.connection.channel.nackedMessageId)
+	assert.True(t, testDialer.connection.channel.nackRequeue)
 }

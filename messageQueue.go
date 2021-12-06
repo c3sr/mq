@@ -9,16 +9,20 @@ type messageQueue struct {
 	connection interfaces.QueueConnection
 }
 
-func (q messageQueue) Acknowledge(message interfaces.Message) error {
+func (q *messageQueue) Acknowledge(message interfaces.Message) error {
 	return q.channel.Ack(message.Id, false)
 }
 
-func (q messageQueue) Shutdown() {
+func (q *messageQueue) Nack(message interfaces.Message) error {
+	return q.channel.Nack(message.Id, false, true)
+}
+
+func (q *messageQueue) Shutdown() {
 	q.channel.Close()
 	q.connection.Close()
 }
 
-func (q messageQueue) GetPublishChannel(name string) (interfaces.Channel, error) {
+func (q *messageQueue) GetPublishChannel(name string) (interfaces.Channel, error) {
 	q.channel.QueueDeclare(
 		name,
 		false,
@@ -33,7 +37,7 @@ func (q messageQueue) GetPublishChannel(name string) (interfaces.Channel, error)
 	}, nil
 }
 
-func (q messageQueue) SubscribeToChannel(name string) (<-chan interfaces.Message, error) {
+func (q *messageQueue) SubscribeToChannel(name string) (<-chan interfaces.Message, error) {
 	queue, err := q.channel.QueueDeclare(name, false, false, false, false, nil)
 
 	if err != nil {

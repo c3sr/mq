@@ -2,6 +2,7 @@ package interfaces
 
 type MessageQueue interface {
 	Acknowledge(message Message) error
+	Nack(message Message) error
 	Shutdown()
 	GetPublishChannel(name string) (Channel, error)
 	SubscribeToChannel(name string) (<-chan Message, error)
@@ -23,6 +24,7 @@ type QueueChannel interface {
 	Close() error
 	Consume(queue string, consumer string, autoAck bool, exclusive bool, noLocal bool, noWait bool, args map[string]interface{}) (<-chan Message, error)
 	ExchangeDeclare(name string, kind string, durable bool, autoDelete bool, internal bool, noWait bool, args map[string]interface{}) error
+	Nack(tag uint64, multiple bool, requeue bool) error
 	Publish(exchange string, routingKey string, mandatory bool, immediate bool, message Message) error
 	QueueBind(name string, routingKey string, exchange string, noWait bool, args map[string]interface{}) error
 	QueueDeclare(name string, durable bool, autoDelete bool, exclusive bool, noWait bool, args map[string]interface{}) (Queue, error)

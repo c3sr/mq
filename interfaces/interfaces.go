@@ -1,5 +1,7 @@
+// Package interfaces defines the interfaces used to interact with a message queue
 package interfaces
 
+// MessageQueue defines interactions available for a message queue implementation
 type MessageQueue interface {
 	Acknowledge(message Message) error
 	Nack(message Message) error
@@ -8,6 +10,7 @@ type MessageQueue interface {
 	SubscribeToChannel(name string) (<-chan Message, error)
 }
 
+// Message defines the structure of a message sent to or received from a message queue
 type Message struct {
 	Body          []byte
 	ContentType   string
@@ -15,10 +18,12 @@ type Message struct {
 	Id            uint64
 }
 
+// Queue defines the known details of a queue.
 type Queue struct {
 	Name string
 }
 
+// QueueChannel is the interface used to interact with an underlying message queue channel implementation.
 type QueueChannel interface {
 	Ack(tag uint64, multiple bool) error
 	Close() error
@@ -30,15 +35,18 @@ type QueueChannel interface {
 	QueueDeclare(name string, durable bool, autoDelete bool, exclusive bool, noWait bool, args map[string]interface{}) (Queue, error)
 }
 
+// QueueConnection is the interface used to interact with an underlying message queue connection implementation.
 type QueueConnection interface {
 	Channel() (QueueChannel, error)
 	Close() error
 }
 
+// QueueDialer is the interface used to connect to an underlying message queue implementation.
 type QueueDialer interface {
 	Dial(url string) (QueueConnection, error)
 }
 
+// Channel defines the interface for sending messages to an underlying message queue implementation.
 type Channel interface {
 	SendMessage(message string) (string, error)
 }

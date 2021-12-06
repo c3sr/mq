@@ -8,9 +8,13 @@ import (
 	"testing"
 )
 
-func TestRabbitBasicCommunication(t *testing.T) {
+func setupDialer() {
 	dialer := NewRabbitDialer()
 	mq.SetDialer(dialer)
+}
+
+func TestRabbitBasicCommunication(t *testing.T) {
+	setupDialer()
 	messageQueue, err := mq.NewMessageQueue()
 
 	assert.Nil(t, err, "NewMessageQueue should not return an error")
@@ -27,4 +31,38 @@ func TestRabbitBasicCommunication(t *testing.T) {
 	message := <-messages
 
 	assert.Equal(t, "test message", string(message.Body))
+
+	messageQueue.Shutdown()
+}
+
+func TestMessageAcknowledgement(t *testing.T) {
+	setupDialer()
+	messageQueue, _ := mq.NewMessageQueue()
+	messageQueue2, _ := mq.NewMessageQueue()
+	messageQueue3, _ := mq.NewMessageQueue()
+
+	channel, _ := messageQueue.GetPublishChannel("integration2")
+	messages2, _ := messageQueue2.SubscribeToChannel("integration2")
+	messages3, _ := messageQueue3.SubscribeToChannel("integration2")
+
+	channel.SendMessage("acknowledged")
+
+	message2 := <-messages2
+	err := messageQueue2.Acknowledge(message2)
+
+	if err != nil {
+		t.Errorf("failed to acknowledge message: %s", err)
+	}
+
+	select {
+	case msg := <-messages3:
+		t.Errorf("Should not have received acknowledged message: %s", string(msg.Body))
+
+	default:
+		println("Acknowledge successful")
+	}
+
+	messageQueue.Shutdown()
+	messageQueue2.Shutdown()
+	messageQueue3.Shutdown()
 }

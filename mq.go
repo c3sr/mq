@@ -7,8 +7,6 @@ import (
 	"os"
 )
 
-var connection interfaces.QueueConnection
-var qChannel interfaces.QueueChannel
 var dialer interfaces.QueueDialer
 
 func failOnError(err error, msg string) {
@@ -29,15 +27,17 @@ func NewMessageQueue() (mq interfaces.MessageQueue, err error) {
 
 	url := makeMqUrlFromEnvironment()
 
-	if connection == nil {
-		connection, err := dialer.Dial(url)
-		failOnError(err, "Failed to connect to message queue")
-		qChannel, err = connection.Channel()
-		failOnError(err, "Failed to open a channel")
-	}
+	var ch interfaces.QueueChannel
+	var conn interfaces.QueueConnection
+
+	conn, err = dialer.Dial(url)
+	failOnError(err, "Failed to connect to message queue")
+	ch, err = conn.Channel()
+	failOnError(err, "Failed to open a channel")
 
 	mq = messageQueue{
-		channel: qChannel,
+		channel:    ch,
+		connection: conn,
 	}
 
 	return

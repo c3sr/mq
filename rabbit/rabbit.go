@@ -24,6 +24,7 @@ func (c *rabbitChannel) Consume(queue string, consumer string, autoAck bool, exc
 	go func() {
 		for d := range delivery {
 			messages <- interfaces.Message{
+				Id:          d.DeliveryTag,
 				ContentType: d.ContentType,
 				Body:        d.Body,
 			}

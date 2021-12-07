@@ -43,7 +43,8 @@ type QueueConnection interface {
 
 // QueueDialer is the interface used to connect to an underlying message queue implementation.
 type QueueDialer interface {
-	Dial(url string) (QueueConnection, error)
+	Dial() (QueueConnection, error)
+	URL() string
 }
 
 // Channel defines the interface for sending messages to an underlying message queue implementation.

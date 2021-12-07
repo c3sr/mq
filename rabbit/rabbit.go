@@ -1,8 +1,10 @@
 package rabbit
 
 import (
+	"fmt"
 	"github.com/c3sr/mq/interfaces"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"os"
 )
 
 type rabbitChannel struct {
@@ -80,12 +82,29 @@ func (c *rabbitConnection) Close() error {
 	return c.Connection.Close()
 }
 
-type rabbitDialer struct{}
+type rabbitDialer struct {
+	url string
+}
 
-func (d *rabbitDialer) Dial(url string) (interfaces.QueueConnection, error) {
-	conn, err := amqp.Dial(url)
+func (d *rabbitDialer) Dial() (interfaces.QueueConnection, error) {
+	d.url = makeMqUrlFromEnvironment()
+	conn, err := amqp.Dial(d.url)
 
 	return &rabbitConnection{conn}, err
+}
+
+func (d *rabbitDialer) URL() string {
+	return d.url
+}
+
+func makeMqUrlFromEnvironment() string {
+	return fmt.Sprintf(
+		"amqp://%s:%s@%s:%s/",
+		os.Getenv("MQ_USER"),
+		os.Getenv("MQ_PASSWORD"),
+		os.Getenv("MQ_HOST"),
+		os.Getenv("MQ_PORT"),
+	)
 }
 
 func NewRabbitDialer() interfaces.QueueDialer {

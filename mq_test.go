@@ -5,7 +5,6 @@ package mq
 import (
 	"github.com/c3sr/mq/interfaces"
 	"github.com/stretchr/testify/assert"
-	"os"
 	"testing"
 )
 
@@ -94,23 +93,23 @@ func (s *spyConnection) Close() error {
 }
 
 type spyDialer struct {
-	url        string
 	connection *spyConnection
 }
 
-func (d *spyDialer) Dial(url string) (interfaces.QueueConnection, error) {
-	d.url = url
+func (d *spyDialer) Dial() (interfaces.QueueConnection, error) {
 	d.connection = &spyConnection{}
 
 	return d.connection, nil
 }
 
+func (d *spyDialer) URL() string {
+	return ""
+}
+
 var testDialer *spyDialer
 
 func setupDialer() {
-	testDialer = &spyDialer{
-		url: "",
-	}
+	testDialer = &spyDialer{}
 
 	SetDialer(testDialer)
 }
@@ -119,17 +118,6 @@ func TestNoDialerError(t *testing.T) {
 	_, err := NewMessageQueue()
 
 	assert.Equal(t, "A dialer must be provided using SetDialer()", err.Error())
-}
-
-func TestMessageQueueDialsUrlFromEnvironment(t *testing.T) {
-	os.Setenv("MQ_HOST", "testhost")
-	os.Setenv("MQ_PORT", "1234")
-	os.Setenv("MQ_USER", "testuser")
-	os.Setenv("MQ_PASSWORD", "testpassword")
-	setupDialer()
-	NewMessageQueue()
-
-	assert.Equal(t, "amqp://testuser:testpassword@testhost:1234/", testDialer.url)
 }
 
 func TestGetPublishChannelDeclaresQueue(t *testing.T) {

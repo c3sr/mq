@@ -7,7 +7,6 @@ package mq
 import (
 	"fmt"
 	"github.com/c3sr/mq/interfaces"
-	"os"
 )
 
 var dialer interfaces.QueueDialer
@@ -27,12 +26,10 @@ func NewMessageQueue() (mq interfaces.MessageQueue, err error) {
 		return
 	}
 
-	url := makeMqUrlFromEnvironment()
-
 	var ch interfaces.QueueChannel
 	var conn interfaces.QueueConnection
 
-	conn, err = dialer.Dial(url)
+	conn, err = dialer.Dial()
 	if err != nil {
 		return
 	}
@@ -47,14 +44,4 @@ func NewMessageQueue() (mq interfaces.MessageQueue, err error) {
 	}
 
 	return
-}
-
-func makeMqUrlFromEnvironment() string {
-	return fmt.Sprintf(
-		"amqp://%s:%s@%s:%s/",
-		os.Getenv("MQ_USER"),
-		os.Getenv("MQ_PASSWORD"),
-		os.Getenv("MQ_HOST"),
-		os.Getenv("MQ_PORT"),
-	)
 }

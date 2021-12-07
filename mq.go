@@ -7,17 +7,10 @@ package mq
 import (
 	"fmt"
 	"github.com/c3sr/mq/interfaces"
-	"log"
 	"os"
 )
 
 var dialer interfaces.QueueDialer
-
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Fatalf("%s: %s", msg, err)
-	}
-}
 
 // SetDialer configures the package with a dialer that provides connections to a specific Message Queue
 // implementation.
@@ -40,9 +33,13 @@ func NewMessageQueue() (mq interfaces.MessageQueue, err error) {
 	var conn interfaces.QueueConnection
 
 	conn, err = dialer.Dial(url)
-	failOnError(err, "Failed to connect to message queue")
+	if err != nil {
+		return
+	}
 	ch, err = conn.Channel()
-	failOnError(err, "Failed to open a channel")
+	if err != nil {
+		return
+	}
 
 	mq = &messageQueue{
 		channel:    ch,

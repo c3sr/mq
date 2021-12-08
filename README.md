@@ -30,3 +30,8 @@ in the environment variables listed above.
 
 The script at `/scripts/run-integration-tests.sh` will start a RabbitMQ server in a docker container and run the
 integration tests against it. This requires that you have Docker and at least go version 1.13 installed.
+
+## Code Coverage
+
+The script at `/scripts/generate-coverage-report.sh` will run the Unit and Integration tests with coverage, and produce
+a report `coverage.html` from the merged results.

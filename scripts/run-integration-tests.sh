@@ -15,7 +15,7 @@ do
 done
 
 echo "\nRunning integration tests..."
-go clean -testcache && go test --tags integration ./...
+go clean -testcache && go test -coverprofile integration.out --tags integration ./...
 
 echo "Cleaning up RabbitMQ container..."
 docker stop mlmodelscope_rabbitmq-integration > /dev/null

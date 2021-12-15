@@ -50,4 +50,5 @@ type QueueDialer interface {
 // Channel defines the interface for sending messages to an underlying message queue implementation.
 type Channel interface {
 	SendMessage(message string) (string, error)
+	SendResponse(message string, correlationId string) error
 }

@@ -175,6 +175,15 @@ func TestSendMessageSetsCorrelationIdToUUID(t *testing.T) {
 	assert.Equal(t, correlationId, testDialer.connection.channel.lastCorrelationId)
 }
 
+func TestSendResponseUsesPassedCorrelationId(t *testing.T) {
+	setupDialer()
+	mq, _ := NewMessageQueue()
+	channel, _ := mq.GetPublishChannel("publish")
+	_ = channel.SendResponse("test", "correlation")
+
+	assert.Equal(t, "correlation", testDialer.connection.channel.lastCorrelationId)
+}
+
 func TestNegativeAcknowledgeMessage(t *testing.T) {
 	setupDialer()
 	mq, _ := NewMessageQueue()

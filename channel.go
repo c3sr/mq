@@ -11,17 +11,26 @@ type channel struct {
 	queueChannel interfaces.QueueChannel
 }
 
-// SendMessage sends the given interfaces.Message to the underlying message queue.
+// SendMessage wraps the given message string in an interfaces.Message and sends
+// it to the underlying message queue.
 //
-// A random UUID is generated and assigned to the message's CorrelationId. This
+// A random UUID is generated and assigned to the Message's CorrelationId. This
 // UUID is returned.
-func (c *channel) SendMessage(message string) (string, error) {
-	correlationId := uuid.New().String()
-	err := c.queueChannel.Publish("", c.queueName, false, false, interfaces.Message{
+func (c *channel) SendMessage(message string) (correlationId string, err error) {
+	correlationId = uuid.New().String()
+	err = c.SendResponse(message, correlationId)
+
+	return correlationId, err
+}
+
+// SendResponse wraps the given message string in an interfaces.Message and sends
+// it to the underlying message queue.
+//
+// The given correlationId is assigned the the Message's CorrelationId.
+func (c *channel) SendResponse(message string, correlationId string) error {
+	return c.queueChannel.Publish("", c.queueName, false, false, interfaces.Message{
 		ContentType:   "text/plain",
 		CorrelationId: correlationId,
 		Body:          []byte(message),
 	})
-
-	return correlationId, err
 }

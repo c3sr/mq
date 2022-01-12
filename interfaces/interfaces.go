@@ -5,6 +5,7 @@ package interfaces
 type MessageQueue interface {
 	Acknowledge(message Message) error
 	Nack(message Message) error
+	NotifyClose(chan error)
 	Shutdown()
 	GetPublishChannel(name string) (Channel, error)
 	SubscribeToChannel(name string) (<-chan Message, error)
@@ -39,6 +40,7 @@ type QueueChannel interface {
 type QueueConnection interface {
 	Channel() (QueueChannel, error)
 	Close() error
+	NotifyClose(chan error)
 }
 
 // QueueDialer is the interface used to connect to an underlying message queue implementation.

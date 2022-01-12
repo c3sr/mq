@@ -92,6 +92,9 @@ func (s *spyConnection) Close() error {
 	return nil
 }
 
+func (s *spyConnection) NotifyClose(chan error) {
+}
+
 type spyDialer struct {
 	connection *spyConnection
 }

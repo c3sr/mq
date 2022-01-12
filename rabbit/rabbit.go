@@ -79,3 +79,16 @@ func (c *rabbitConnection) Channel() (interfaces.QueueChannel, error) {
 func (c *rabbitConnection) Close() error {
 	return c.Connection.Close()
 }
+
+func (c *rabbitConnection) NotifyClose(ch chan error) {
+	closed := make(chan *amqp.Error)
+
+	go func() {
+		c.Connection.NotifyClose(closed)
+
+		for err := range closed {
+			ch <- err
+		}
+		close(ch)
+	}()
+}

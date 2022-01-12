@@ -21,6 +21,12 @@ func (q *messageQueue) Nack(message interfaces.Message) error {
 	return q.channel.Nack(message.Id, false, true)
 }
 
+// NotifyClose registers a listener for close events either initiated by an error or a normal shutdown. The chan provided
+// will be closed when the connection is closed, and on a graceful close no error will be sent.
+func (q *messageQueue) NotifyClose(ch chan error) {
+	q.connection.NotifyClose(ch)
+}
+
 // Shutdown closes any connection to the underlying message queue and clears associated resources.
 func (q *messageQueue) Shutdown() {
 	q.channel.Close()
